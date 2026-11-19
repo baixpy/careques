@@ -1,0 +1,30 @@
+{# Expects `history` (list of appointments). Used by the patient page and the appointments page. #}
+<table>
+  <thead>
+    <tr><th>Date</th><th>Time</th><th>Token</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Status</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for a in history %}
+    <tr class="{{ 'muted' if a.status == 'cancelled' }}">
+      <td>{{ a.date | pretty_date }}</td>
+      <td>{{ a.slot }}</td>
+      <td><a class="token" href="{{ url_for('appointment_slip', appointment_id=a.appointment_id) }}">{{ a.token }}</a></td>
+      <td><a href="{{ url_for('patient_detail', patient_id=a.patient_id) }}">{{ patients[a.patient_id].name if a.patient_id in patients else a.patient_id }}</a></td>
+      <td>{{ doctors[a.doctor_id].name if a.doctor_id in doctors else a.doctor_id }}</td>
+      <td>{{ a.department }}</td>
+      <td><span class="badge {{ a.status }}">{{ a.status }}</span></td>
+      <td>
+        {% if a.status == 'booked' and a.date >= today %}
+          <form method="post" action="{{ url_for('cancel', appointment_id=a.appointment_id) }}"
+                onsubmit="return confirm('Cancel token {{ a.token }} at {{ a.slot }} on {{ a.date }}?');">
+            <input type="hidden" name="next" value="{{ request.full_path }}">
+            <button class="link danger" type="submit">Cancel</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="muted">No appointments.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Today · {{ today | pretty_date }}</h1>
+
+<div class="cards">
+  <div class="card stat"><span>{{ todays_count }}</span>appointments today</div>
+  <div class="card stat"><span>{{ per_doctor | selectattr('working') | list | length }}</span>doctors in OPD</div>
+  <div class="card stat"><span>{{ per_doctor | sum(attribute='free') }}</span>slots still free</div>
+  <div class="card stat"><span>{{ patient_count }}</span>registered patients</div>
+</div>
+
+<div class="actions">
+  <a class="btn" href="{{ url_for('patients') }}#register">Register patient</a>
+  <a class="btn" href="{{ url_for('book') }}">Book appointment</a>
+  <a class="btn secondary" href="{{ url_for('analysis_page') }}">View analysis</a>
+</div>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Doctors today</h2>
+    <table>
+      <thead><tr><th>Doctor</th><th>Department</th><th>Booked</th><th></th></tr></thead>
+      <tbody>
+      {% for d in per_doctor %}
+        <tr class="{{ '' if d.working else 'muted' }}">
+          <td>{{ d.name }}</td>
+          <td>{{ d.department }}</td>
+          <td>
+            {% if d.working %}
+              <div class="meter"><div style="width: {{ (100 * d.booked / slots_per_day) | round | int }}%"></div></div>
+              {{ d.booked }}/{{ slots_per_day }}
+            {% else %}Off today{% endif %}
+          </td>
+          <td>{% if d.working %}<a href="{{ url_for('doctor_day', doctor_id=d.doctor_id, date=today) }}">View day</a>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Next up</h2>
+    {% if upcoming %}
+    <table>
+      <thead><tr><th>Time</th><th>Token</th><th>Patient</th><th>Doctor</th></tr></thead>
+      <tbody>
+      {% for a in upcoming %}
+        <tr>
+          <td>{{ a.slot }}</td>
+          <td><span class="token">{{ a.token }}</span></td>
+          <td><a href="{{ url_for('patient_detail', patient_id=a.patient_id) }}">{{ patients[a.patient_id].name if a.patient_id in patients else a.patient_id }}</a></td>
+          <td>{{ doctors[a.doctor_id].name }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No more appointments today.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

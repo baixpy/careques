@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ doctor.name }} · {{ day }}{% endblock %}
+{% block content %}
+<h1>Doctor's day</h1>
+
+<form method="get" class="card filters">
+  <label>Doctor
+    <select name="doctor_id">
+      {% for d in doctors.values() %}
+        <option value="{{ d.doctor_id }}" {{ 'selected' if d.doctor_id == doctor.doctor_id }}>{{ d.name }} · {{ d.department }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Date <input type="date" name="date" value="{{ day }}"></label>
+  <button class="btn secondary" type="submit">Show</button>
+</form>
+
+<section class="card">
+  <h2>{{ doctor.name }} · {{ day | pretty_date }}</h2>
+  {% if not working %}
+    <p class="flash info">{{ doctor.name }} does not hold OPD on {{ day | weekday }}s.</p>
+  {% else %}
+    <p class="muted">{{ booked }} of {{ rows|length }} slots booked.
+      {% if day >= today %}<a href="{{ url_for('book', doctor_id=doctor.doctor_id, date=day) }}">Book a slot</a>{% endif %}
+    </p>
+    <div class="slots">
+      {% for r in rows %}
+        {% if r.appointment %}
+          <a class="slot taken" href="{{ url_for('appointment_slip', appointment_id=r.appointment.appointment_id) }}">
+            <b>{{ r.slot }}</b>
+            <span class="token">{{ r.appointment.token }}</span>
+            <span>{{ r.patient.name if r.patient else r.appointment.patient_id }}</span>
+          </a>
+        {% else %}
+          {% if day >= today %}
+            <a class="slot free" href="{{ url_for('book', doctor_id=doctor.doctor_id, date=day, slot=r.slot) }}"><b>{{ r.slot }}</b><span>Free · book</span></a>
+          {% else %}
+            <div class="slot free"><b>{{ r.slot }}</b><span>Free</span></div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

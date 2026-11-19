@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Book appointment{% endblock %}
+{% block content %}
+<h1>Book an OPD appointment</h1>
+
+<section class="card narrow">
+  <form method="post" class="form" id="book-form">
+    <label>Patient ID
+      <input name="patient_id" required value="{{ form.get('patient_id', '') }}" placeholder="e.g. P0001" list="patient-list" autocomplete="off">
+      <datalist id="patient-list">
+        {% for p in patients.values() %}<option value="{{ p.patient_id }}">{{ p.name }} · {{ p.phone }}</option>{% endfor %}
+      </datalist>
+      <small>Not registered yet? <a href="{{ url_for('patients') }}#register">Register the patient first.</a></small>
+    </label>
+
+    <label>Doctor
+      <select name="doctor_id" id="doctor" required>
+        <option value="">Choose a doctor…</option>
+        {% for d in doctors.values() %}
+          <option value="{{ d.doctor_id }}" {{ 'selected' if form.get('doctor_id') == d.doctor_id }}>
+            {{ d.name }} · {{ d.department }} ({% for i in d.working_days %}{{ cfg.WEEKDAY_NAMES[i][:3] }}{{ ', ' if not loop.last }}{% endfor %})
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Date
+      <input type="date" name="date" id="date" required min="{{ today }}" value="{{ form.get('date', today) }}">
+    </label>
+
+    <label>Time slot
+      <select name="slot" id="slot" required data-selected="{{ form.get('slot', '') }}">
+        <option value="">Choose a doctor and date first</option>
+      </select>
+      <small id="slot-msg" class="muted"></small>
+    </label>
+
+    <button class="btn" type="submit">Book and issue token</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Fill the slot list with the doctor's free slots for the chosen date.
+  const doctor = document.getElementById("doctor");
+  const day = document.getElementById("date");
+  const slot = document.getElementById("slot");
+  const msg = document.getElementById("slot-msg");
+
+  async function loadSlots() {
+    slot.innerHTML = "";
+    if (!doctor.value || !day.value) {
+      slot.add(new Option("Choose a doctor and date first", ""));
+      msg.textContent = "";
+      return;
+    }
+    const params = new URLSearchParams({ doctor_id: doctor.value, date: day.value });
+    try {
+      const res = await fetch("{{ url_for('api_slots') }}?" + params);
+      const data = await res.json();
+      slot.add(new Option(data.slots.length ? "Choose a slot…" : "No free slots", ""));
+      data.slots.forEach(s => slot.add(new Option(s, s, false, s === slot.dataset.selected)));
+      msg.textContent = data.message;
+    } catch (e) {
+      slot.add(new Option("Could not load slots", ""));
+      msg.textContent = "Network error. Try again.";
+    }
+  }
+  doctor.addEventListener("change", loadSlots);
+  day.addEventListener("change", loadSlots);
+  loadSlots();
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }}{% endblock %}
+{% block content %}
+<h1>{{ patient.name }} <small class="muted">{{ patient.patient_id }}</small></h1>
+
+<div class="cards">
+  <div class="card stat"><span>{{ patient.age }}</span>years · {{ patient.gender }}</div>
+  <div class="card stat"><span>{{ visits }}</span>{{ 'visit' if visits == 1 else 'visits' }}{% if visits > 1 %} · repeat patient{% endif %}</div>
+  <div class="card stat small"><span>{{ patient.phone }}</span>registered {{ patient.registered_on }}</div>
+</div>
+
+<div class="actions">
+  <a class="btn" href="{{ url_for('book', patient_id=patient.patient_id) }}">Book appointment</a>
+</div>
+
+<section class="card">
+  <h2>Appointment history</h2>
+  {% include "_appointment_table.html" %}
+</section>
+{% endblock %}

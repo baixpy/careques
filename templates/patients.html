@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Patients{% endblock %}
+{% block content %}
+<h1>Patients</h1>
+
+<div class="grid2">
+  <section class="card" id="register">
+    <h2>Register a patient</h2>
+    <form method="post" class="form">
+      <label>Full name
+        <input name="name" required minlength="2" maxlength="60" value="{{ form.get('name', '') }}" placeholder="e.g. Priya Sharma">
+      </label>
+      <div class="row">
+        <label>Age
+          <input name="age" type="number" min="0" max="120" required value="{{ form.get('age', '') }}">
+        </label>
+        <label>Gender
+          <select name="gender" required>
+            <option value="">Choose…</option>
+            {% for g in ['Male', 'Female', 'Other'] %}
+              <option {{ 'selected' if form.get('gender') == g }}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <label>Mobile number
+        <input name="phone" type="tel" required maxlength="16" value="{{ form.get('phone', '') }}" placeholder="10-digit mobile">
+      </label>
+      <button class="btn" type="submit">Register</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Find a patient</h2>
+    <form method="get" class="inline">
+      <input name="q" value="{{ q }}" placeholder="Name, patient ID or phone">
+      <button class="btn secondary" type="submit">Search</button>
+      {% if q %}<a href="{{ url_for('patients') }}">Clear</a>{% endif %}
+    </form>
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Phone</th><th></th></tr></thead>
+      <tbody>
+      {% for p in rows %}
+        <tr>
+          <td><a href="{{ url_for('patient_detail', patient_id=p.patient_id) }}">{{ p.patient_id }}</a></td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.age }}</td>
+          <td>{{ p.phone }}</td>
+          <td><a href="{{ url_for('book', patient_id=p.patient_id) }}">Book</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">No patients found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

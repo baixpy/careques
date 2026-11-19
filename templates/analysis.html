@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Analysis{% endblock %}
+{% block content %}
+<h1>OPD analysis</h1>
+<p class="muted">Based on booked appointments only. Cancelled appointments are counted separately.</p>
+
+<div class="cards">
+  <div class="card stat"><span>{{ s.total_booked }}</span>booked appointments</div>
+  <div class="card stat"><span>{{ s.unique_patients }}</span>distinct patients</div>
+  <div class="card stat"><span>{{ s.repeat_count }}</span>repeat patients</div>
+  <div class="card stat"><span>{{ s.cancel_rate }}%</span>cancelled ({{ s.total_cancelled }})</div>
+  <div class="card stat small"><span>{{ s.busiest_weekday or '–' }}</span>busiest weekday</div>
+  <div class="card stat small"><span>{% if s.busiest_hour is not none %}{{ '%02d:00' % s.busiest_hour }}{% else %}–{% endif %}</span>busiest hour</div>
+</div>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Patient load by department</h2>
+    <img class="chart" src="{{ url_for('chart', name='department') }}" alt="Bar chart of appointments per department">
+    <table>
+      <thead><tr><th>Department</th><th>Appointments</th><th>Patients</th></tr></thead>
+      <tbody>
+      {% for row in s.department_load.itertuples() %}
+        <tr><td>{{ row.department }}</td><td>{{ row.appointments }}</td><td>{{ row.patients }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Daily appointments</h2>
+    <img class="chart" src="{{ url_for('chart', name='daily') }}" alt="Line chart of appointments per day">
+    <h3>Busiest dates</h3>
+    <table>
+      <thead><tr><th>Date</th><th>Day</th><th>Appointments</th></tr></thead>
+      <tbody>
+      {% for row in s.busiest_dates.itertuples() %}
+        <tr><td>{{ row.date }}</td><td>{{ row.weekday }}</td><td>{{ row.appointments }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Busiest hours</h2>
+    <img class="chart" src="{{ url_for('chart', name='hourly') }}" alt="Heat-coloured bar chart of appointments per hour">
+  </section>
+
+  <section class="card">
+    <h2>Busiest weekdays</h2>
+    <img class="chart" src="{{ url_for('chart', name='weekday') }}" alt="Bar chart of average appointments per weekday">
+    <table>
+      <thead><tr><th>Weekday</th><th>Total</th><th>Average per OPD day</th></tr></thead>
+      <tbody>
+      {% for row in s.weekdays.itertuples() %}
+        <tr><td>{{ row.weekday }}</td><td>{{ row.appointments }}</td><td>{{ row.average_per_day }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Repeat patients</h2>
+  <table>
+    <thead><tr><th>Patient</th><th>Visits</th><th>Departments</th><th>First visit</th><th>Last visit</th></tr></thead>
+    <tbody>
+    {% for row in s.repeat_patients.head(25).itertuples() %}
+      <tr>
+        <td><a href="{{ url_for('patient_detail', patient_id=row.patient_id) }}">{{ row.name }}</a> <small class="muted">{{ row.patient_id }}</small></td>
+        <td>{{ row.visits }}</td>
+        <td>{{ row.departments }}</td>
+        <td>{{ row.first_visit }}</td>
+        <td>{{ row.last_visit }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No repeat patients yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if s.repeat_count > 25 %}<p class="muted">Showing the top 25 of {{ s.repeat_count }}.</p>{% endif %}
+</section>
+{% endblock %}

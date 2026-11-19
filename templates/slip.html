@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Token {{ a.token }}{% endblock %}
+{% block content %}
+<section class="card slip">
+  <p class="muted">CareQueue OPD · Appointment {{ a.appointment_id }}</p>
+  <div class="big-token">{{ a.token }}</div>
+  <p class="muted">Token number</p>
+  <table class="kv">
+    <tr><th>Patient</th><td>{{ patient.name if patient else a.patient_id }} ({{ a.patient_id }})</td></tr>
+    <tr><th>Doctor</th><td>{{ doctor.name }}</td></tr>
+    <tr><th>Department</th><td>{{ a.department }}</td></tr>
+    <tr><th>Date</th><td>{{ a.date | pretty_date }}</td></tr>
+    <tr><th>Time</th><td>{{ a.slot }}</td></tr>
+    <tr><th>Status</th><td><span class="badge {{ a.status }}">{{ a.status }}</span></td></tr>
+  </table>
+  <div class="actions no-print">
+    <button class="btn secondary" onclick="window.print()">Print</button>
+    <a class="btn secondary" href="{{ url_for('patient_detail', patient_id=a.patient_id) }}">Patient history</a>
+    {% if a.status == 'booked' and a.date >= today %}
+      <form method="post" action="{{ url_for('cancel', appointment_id=a.appointment_id) }}" onsubmit="return confirm('Cancel this appointment?');">
+        <input type="hidden" name="next" value="{{ url_for('appointment_slip', appointment_id=a.appointment_id) }}">
+        <button class="btn danger" type="submit">Cancel appointment</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
